@@ -18,6 +18,6 @@ bot.on("message", (message) => {
             {role: "user", content: message.text}
         ]
     }).then((completion) => {
-        bot.sendMessage(message.chat.id, completion.data.choices[0].message)
+        bot.sendMessage(message.chat.id, completion.data.choices[0].message.content)
     })
 })
