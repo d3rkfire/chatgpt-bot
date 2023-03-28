@@ -1,3 +1,5 @@
+#!/bin/env node
+
 require("dotenv").config()
 
 const Configuration = require("openai").Configuration
