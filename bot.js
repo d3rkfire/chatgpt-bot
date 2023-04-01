@@ -35,6 +35,7 @@ bot.onText(/^\/setrole (.+)$/, (message, match) => {
             bot.sendMessage(message.chat.id, response)
         }
     })
+    roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
 })
 
 // Reset Role
@@ -62,6 +63,7 @@ bot.onText(/^[^\/].*/, (message, _) => {
                 const response = responses.en.setrole.success + roleDescription
                 bot.sendMessage(message.chat.id, response)
             }
+            roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
         })
     } else {
         // Chat did not request /setrole
