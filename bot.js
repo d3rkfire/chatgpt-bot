@@ -15,11 +15,11 @@ const TelegramBot = require("node-telegram-bot-api")
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {polling: true})
 
 // Set Role
-bot.onText(/\/setrole/, (message, _) => {
+bot.onText(/^\/setrole$/, (message, _) => {
     bot.sendMessage(message.chat.id, responses.en.setrole.describe)
     roleRequestQueue.push(message.chat.id)
 })
-bot.onText(/\/setrole (.+)/, (message, match) => {
+bot.onText(/^\/setrole (.+)$/, (message, match) => {
     const roleDescription = match[1]
     const roleFilepath = "./roles/" + message.chat.id
     fs.writeFile(roleFilepath, roleDescription, (error) => {
@@ -34,7 +34,7 @@ bot.onText(/\/setrole (.+)/, (message, match) => {
 })
 
 // Unset Role
-bot.onText(/\/resetrole/, (message, _) => {
+bot.onText(/^\/resetrole$/, (message, _) => {
     const roleFilepath = "./roles/" + message.chat.id
     fs.unlink(roleFilepath, (error) => {
         if (error) console.log(error)
