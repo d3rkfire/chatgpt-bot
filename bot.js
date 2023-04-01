@@ -42,22 +42,39 @@ bot.onText(/^\/resetrole$/, (message, _) => {
     })
 })
 
-// bot.on("message", (message) => {
-//     const roleFilepath = "./roles/" + message.chat.id
-//     fs.readFile(roleFilepath, "utf-8", (error, data) => {
-//         var role = process.env.OPENAI_DEFAULT_ROLE
-//         if (error) console.log(error)
-//         else role = data
+// Regular Messages
+bot.onText(/^[^\/].*/, (message, _) => {
+    const roleFilepath = "./roles/" + message.chat.id
 
-//         bot.sendMessage(message.chat.id, message.text + " AND ROLE is " + role)
-//         // openai.createChatCompletion({
-//         //     model: process.env.OPENAI_MODEL,
-//         //     messages: [
-//         //         {role: "system", content: role},
-//         //         {role: "user", content: message.text}
-//         //     ]
-//         // }).then((completion) => {
-//         //     bot.sendMessage(message.chat.id, completion.data.choices[0].message.content)
-//         // })
-//     })
-// })
+    // Check if chat is requesting /setrole
+    if (roleRequestQueue.indexOf(message.chat.id) != -1) {
+        // Chat requested /setrole
+        const roleDescription = message.text.replace(/^\"/, "").replace(/\"$/, "")
+        fs.writeFile(roleFilepath, roleDescription, (error) => {
+            if (error) {
+                console.log(error)
+                bot.sendMessage(message.chat.id, responses.en.setrole.fail)
+            } else {
+                const response = responses.en.setrole.success + roleDescription
+                bot.sendMessage(message.chat.id, response)
+            }
+        })
+    } else {
+        // Chat did not request /setrole
+        fs.readFile(roleFilepath, "utf-8", (error, data) => {
+            var role = process.env.OPENAI_DEFAULT_ROLE
+            if (error) console.log(error)
+            else role = data
+            
+            openai.createChatCompletion({
+                model: process.env.OPENAI_MODEL,
+                messages: [
+                    {role: "system", content: role},
+                    {role: "user", content: message.text}
+                ]
+            }).then((completion) => {
+                bot.sendMessage(message.chat.id, completion.data.choices[0].message.content)
+            })
+        })
+    }
+})
