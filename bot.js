@@ -20,7 +20,7 @@ bot.onText(/^\/setrole$/, (message, _) => {
     roleRequestQueue.push(message.chat.id)
 })
 bot.onText(/^\/setrole (.+)$/, (message, match) => {
-    const roleDescription = match[1]
+    const roleDescription = match[1].replace(/^\"/, "").replace(/\"$/, "")
     const roleFilepath = "./roles/" + message.chat.id
     fs.writeFile(roleFilepath, roleDescription, (error) => {
         if (error) {
