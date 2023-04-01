@@ -13,7 +13,7 @@ const config = new Configuration({
     organization: process.env.OPENAI_ORGANIZATION,
     apiKey: process.env.OPENAI_API_KEY
 })
-// const openai = new OpenAIApi(config)
+const openai = new OpenAIApi(config)
 
 const TelegramBot = require("node-telegram-bot-api")
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {polling: true})
@@ -36,7 +36,6 @@ bot.onText(/^\/setrole (.+)$/, (message, match) => {
         }
         roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
     })
-    roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
 })
 
 // Reset Role
