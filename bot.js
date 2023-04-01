@@ -33,11 +33,12 @@ bot.onText(/^\/setrole (.+)$/, (message, match) => {
     })
 })
 
-// Unset Role
+// Reset Role
 bot.onText(/^\/resetrole$/, (message, _) => {
     const roleFilepath = "./roles/" + message.chat.id
     fs.unlink(roleFilepath, (error) => {
         if (error) console.log(error)
+        bot.sendMessage(message.chat.id, responses.en.resetrole.success)
     })
 })
 
