@@ -3,6 +3,10 @@ const fs = require("fs")
 const responses = require("./responses.json")
 const roleRequestQueue = []
 
+if (!fs.existsSync("./roles")){
+    fs.mkdirSync("./roles");
+}
+
 const Configuration = require("openai").Configuration
 const OpenAIApi = require("openai").OpenAIApi
 const config = new Configuration({
