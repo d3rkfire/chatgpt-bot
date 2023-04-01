@@ -34,6 +34,7 @@ bot.onText(/^\/setrole (.+)$/, (message, match) => {
             const response = responses.en.setrole.success + roleDescription
             bot.sendMessage(message.chat.id, response)
         }
+        roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
     })
     roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
 })
