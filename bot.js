@@ -4,6 +4,7 @@ const fs = require("fs")
 const responses = require("./responses.json")
 const roleRequestQueue = []
 const telegramCharacterLimit=process.env.TELEGRAM_CHARACTER_LIMIT
+const language=process.env.LANGUAGE
 
 if (!fs.existsSync("./roles")){
     fs.mkdirSync("./roles");
@@ -25,7 +26,7 @@ const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {polling: true})
 bot.onText(/^\/showrole/, (message, _) => {
     const roleFilepath = "./roles/" + message.chat.id
     fs.readFile(roleFilepath, "utf-8", (error, data) => {
-        roleResponse = responses.en.showrole.success
+        roleResponse = responses[language].showrole.success
         // No role set = default role
         if (error) roleResponse += process.env.OPENAI_DEFAULT_ROLE
         else roleResponse += data
@@ -35,7 +36,7 @@ bot.onText(/^\/showrole/, (message, _) => {
 
 // Set Role
 bot.onText(/^\/setrole/, (message, _) => {
-    reply(message.chat.id, responses.en.setrole.describe)
+    reply(message.chat.id, responses[language].setrole.describe)
     roleRequestQueue.push(message.chat.id)
 })
 
@@ -44,20 +45,20 @@ bot.onText(/^\/resetrole/, (message, _) => {
     const roleFilepath = "./roles/" + message.chat.id
     fs.unlink(roleFilepath, (error) => {
         if (error) console.log(error)
-        reply(message.chat.id, responses.en.resetrole.success)
+        reply(message.chat.id, responses[language].resetrole.success)
     })
 })
 
 // Receive Context File (.txt)
 bot.on("document", (message, _) => {
     if (message.document.mime_type != "text/plain") {
-        reply(message.chat.id, responses.en.setcontext.nottxt)
+        reply(message.chat.id, responses[language].setcontext.nottxt)
     } else {
         bot.downloadFile(message.document.file_id, "./contexts").then(
             (tmpFilepath) => {
                 const contextFilepath = "./contexts/" + message.chat.id
                 fs.renameSync(tmpFilepath, contextFilepath)
-                reply(message.chat.id, responses.en.setcontext.success)
+                reply(message.chat.id, responses[language].setcontext.success)
             },
             (reason) => { console.log(reason) }
         )
@@ -70,10 +71,10 @@ bot.onText(/^\/showcontext/, (message, _) => {
     fs.readFile(contextFilepath, "utf-8", (error, data) => {
         if (error) {
             console.log(error)
-            reply(message.chat.id, responses.en.showcontext.fail)
+            reply(message.chat.id, responses[language].showcontext.fail)
         }
         else {
-            var contextResponse = responses.en.showcontext.success + data
+            var contextResponse = responses[language].showcontext.success + data
             reply(message.chat.id, contextResponse)
         }
     })
@@ -84,7 +85,7 @@ bot.onText(/^\/clearcontext/, (message, _) => {
     const contextFilepath = "./contexts/" + message.chat.id
     fs.unlink(contextFilepath, (error) => {
         if (error) console.log(error)
-        reply(message.chat.id, responses.en.clearcontext.success)
+        reply(message.chat.id, responses[language].clearcontext.success)
     })
 })
 
@@ -100,9 +101,9 @@ bot.onText(/^[^\/].*/, (message, _) => {
         fs.writeFile(roleFilepath, roleDescription, (error) => {
             if (error) {
                 console.log(error)
-                reply(message.chat.id, responses.en.setrole.fail)
+                reply(message.chat.id, responses[language].setrole.fail)
             } else {
-                const response = responses.en.setrole.success + roleDescription
+                const response = responses[language].setrole.success + roleDescription
                 reply(message.chat.id, response)
             }
             roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
