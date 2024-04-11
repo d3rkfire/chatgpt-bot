@@ -61,9 +61,7 @@ bot.onText(/^\/showcontext/, (message, _) => {
             reply(message.chat.id, responses.en.showcontext.fail)
         }
         else {
-            var contextResponse = responses.en.showcontext.success
-            if (data.length <= 4000) contextResponse += "\n" + data
-            else contextResponse += "\n" + data.substring(0, 1000) + "\n.\n.\n.\n" + data.substring(data.length - 1000, data.length)
+            var contextResponse = responses.en.showcontext.success + "\n" + data
             reply(message.chat.id, contextResponse)
         }
     })
