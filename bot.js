@@ -3,6 +3,7 @@ const oa = require("openai")
 const fs = require("fs")
 const responses = require("./responses.json")
 const roleRequestQueue = []
+const telegramCharacterLimit=process.env.TELEGRAM_CHARACTER_LIMIT
 
 if (!fs.existsSync("./roles")){
     fs.mkdirSync("./roles");
@@ -23,7 +24,7 @@ const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {polling: true})
 
 // Set Role
 bot.onText(/^\/setrole/, (message, _) => {
-    bot.sendMessage(message.chat.id, responses.en.setrole.describe)
+    reply(message.chat.id, responses.en.setrole.describe)
     roleRequestQueue.push(message.chat.id)
 })
 
@@ -32,20 +33,20 @@ bot.onText(/^\/resetrole/, (message, _) => {
     const roleFilepath = "./roles/" + message.chat.id
     fs.unlink(roleFilepath, (error) => {
         if (error) console.log(error)
-        bot.sendMessage(message.chat.id, responses.en.resetrole.success)
+        reply(message.chat.id, responses.en.resetrole.success)
     })
 })
 
 // Receive Context File (.txt)
 bot.on("document", (message, _) => {
     if (message.document.mime_type != "text/plain") {
-        bot.sendMessage(message.chat.id, responses.en.setcontext.nottxt)
+        reply(message.chat.id, responses.en.setcontext.nottxt)
     } else {
         bot.downloadFile(message.document.file_id, "./contexts").then(
             (tmpFilepath) => {
                 const contextFilepath = "./contexts/" + message.chat.id
                 fs.renameSync(tmpFilepath, contextFilepath)
-                bot.sendMessage(message.chat.id, responses.en.setcontext.success)
+                reply(message.chat.id, responses.en.setcontext.success)
             },
             (reason) => { console.log(reason) }
         )
@@ -58,13 +59,13 @@ bot.onText(/^\/showcontext/, (message, _) => {
     fs.readFile(contextFilepath, "utf-8", (error, data) => {
         if (error) {
             console.log(error)
-            bot.sendMessage(message.chat.id, responses.en.showcontext.fail)
+            reply(message.chat.id, responses.en.showcontext.fail)
         }
         else {
             var contextResponse = responses.en.showcontext.success
             if (data.length <= 4000) contextResponse += "\n" + data
             else contextResponse += "\n" + data.substring(0, 1000) + "\n.\n.\n.\n" + data.substring(data.length - 1000, data.length)
-            bot.sendMessage(message.chat.id, contextResponse)
+            reply(message.chat.id, contextResponse)
         }
     })
 })
@@ -74,7 +75,7 @@ bot.onText(/^\/clearcontext/, (message, _) => {
     const contextFilepath = "./contexts/" + message.chat.id
     fs.unlink(contextFilepath, (error) => {
         if (error) console.log(error)
-        bot.sendMessage(message.chat.id, responses.en.clearcontext.success)
+        reply(message.chat.id, responses.en.clearcontext.success)
     })
 })
 
@@ -90,10 +91,10 @@ bot.onText(/^[^\/].*/, (message, _) => {
         fs.writeFile(roleFilepath, roleDescription, (error) => {
             if (error) {
                 console.log(error)
-                bot.sendMessage(message.chat.id, responses.en.setrole.fail)
+                reply(message.chat.id, responses.en.setrole.fail)
             } else {
                 const response = responses.en.setrole.success + roleDescription
-                bot.sendMessage(message.chat.id, response)
+                reply(message.chat.id, response)
             }
             roleRequestQueue.splice(roleRequestQueue.indexOf(message.chat.id), 1)
         })
@@ -122,8 +123,20 @@ bot.onText(/^[^\/].*/, (message, _) => {
                 model: process.env.OPENAI_MODEL,
                 messages
             }).then((completion) => {
-                bot.sendMessage(message.chat.id, completion.choices[0].message.content)
+                reply(message.chat.id, completion.choices[0].message.content)
             })
         })
     }
 })
+
+function reply(chatId, response) {
+    if (response.length <= telegramCharacterLimit) bot.sendMessage(chatId, response)
+    else {
+        var delimiterIndex = response.slice(0, telegramCharacterLimit).lastIndexOf(" ")
+        beginningResponse = response.slice(0, delimiterIndex)
+        remainingResponse = responmse.slice(delimiterIndex + 1, response.length)
+        bot.sendMessage(chatId, beginningResponse).then((_) => {
+            reply(chatId, remainingResponse)
+        })
+    }
+}
