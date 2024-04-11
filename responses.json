@@ -1,5 +1,8 @@
 {
     "en": {
+        "showrole": {
+            "success": "I am currently acting according to this description:\n"
+        },
         "setrole": {
             "describe": "Please describe how you want me to act.\nEg: You are an economics expert that will assist me in writing a thesis.",
             "fail": "Sorry! There seems to be an issue. Please try again later.",
@@ -16,7 +19,7 @@
         },
         "showcontext": {
             "fail": "Sorry! It seems that you have not given me a context yet. Please send me a text file (.txt).\nNote: Answering with context will be slow. Please remove it when you are done.",
-            "success": "Below is the context file you have sent me:"
+            "success": "Below is the context file you have sent me:\n"
         },
         "clearcontext": {
             "fail": "Sorry! There seems to be an issue. Please try again later.",

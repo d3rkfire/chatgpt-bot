@@ -21,6 +21,18 @@ const openai = new oa({
 const TelegramBot = require("node-telegram-bot-api")
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {polling: true})
 
+// Show Role
+bot.onText(/^\/showrole/, (message, _) => {
+    const roleFilepath = "./roles/" + message.chat.id
+    fs.readFile(roleFilepath, "utf-8", (error, data) => {
+        roleResponse = responses.en.showrole.success
+        // No role set = default role
+        if (error) roleResponse += process.env.OPENAI_DEFAULT_ROLE
+        else roleResponse += data
+        reply(message.chat.id, roleResponse)
+    })
+})
+
 // Set Role
 bot.onText(/^\/setrole/, (message, _) => {
     reply(message.chat.id, responses.en.setrole.describe)
@@ -61,7 +73,7 @@ bot.onText(/^\/showcontext/, (message, _) => {
             reply(message.chat.id, responses.en.showcontext.fail)
         }
         else {
-            var contextResponse = responses.en.showcontext.success + "\n" + data
+            var contextResponse = responses.en.showcontext.success + data
             reply(message.chat.id, contextResponse)
         }
     })
@@ -99,10 +111,10 @@ bot.onText(/^[^\/].*/, (message, _) => {
         // Chat did not request /setrole
         fs.readFile(roleFilepath, "utf-8", (error, data) => {
             // Use retrieved response
-            var role = process.env.DEFAULT_ROLE
+            var role = process.env.OPENAI_DEFAULT_ROLE
             if (error) {
                 console.log(error)
-                fs.writeFile(roleFilepath, process.env.DEFAULT_ROLE, () => {})
+                fs.writeFile(roleFilepath, process.env.OPENAI_DEFAULT_ROLE, () => {})
             }
             else role = data
             
@@ -131,7 +143,7 @@ function reply(chatId, response) {
     else {
         var delimiterIndex = response.slice(0, telegramCharacterLimit).lastIndexOf(" ")
         beginningResponse = response.slice(0, delimiterIndex)
-        remainingResponse = responmse.slice(delimiterIndex + 1, response.length)
+        remainingResponse = response.slice(delimiterIndex + 1, response.length)
         bot.sendMessage(chatId, beginningResponse).then((_) => {
             reply(chatId, remainingResponse)
         })
