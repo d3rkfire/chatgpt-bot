@@ -13,11 +13,10 @@ if (!fs.existsSync("./contexts")){
     fs.mkdirSync("./contexts");
 }
 
-// const config = new Configuration({
-//     organization: process.env.OPENAI_ORGANIZATION,
-//     apiKey: process.env.OPENAI_API_KEY
-// })
-const openai = new oa()
+const openai = new oa({
+    organization: process.env.OPENAI_ORGANIZATION,
+    apiKey: process.env.OPENAI_API_KEY
+})
 
 const TelegramBot = require("node-telegram-bot-api")
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {polling: true})
