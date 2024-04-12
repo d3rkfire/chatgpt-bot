@@ -3,6 +3,7 @@ const oa = require("openai")
 const fs = require("fs")
 const responses = require("./responses.json")
 const roleRequestQueue = []
+const historyQueue = []
 const telegramCharacterLimit=process.env.TELEGRAM_CHARACTER_LIMIT
 const language=process.env.LANGUAGE
 
@@ -110,29 +111,34 @@ bot.onText(/^[^\/].*/, (message, _) => {
         })
     } else {
         // Chat did not request /setrole
-        fs.readFile(roleFilepath, "utf-8", (error, data) => {
-            // Use retrieved response
-            var role = process.env.OPENAI_DEFAULT_ROLE
-            if (error) {
-                console.log(error)
-                fs.writeFile(roleFilepath, process.env.OPENAI_DEFAULT_ROLE, () => {})
-            }
-            else role = data
-            
-            var messages = [
-                {role: "system", content: role},
-                {role: "user", content: message.text}
-            ]
-            // Retrieve context
+        fs.readFile(roleFilepath, "utf-8", (roleError, roleData) => {
+            // Message array structure: [context, role, history, currentMessage]
+            var messages = []
+
+            // Add context to messages
             try {
                 const context = fs.readFileSync(contextFilepath, "utf-8")
-                messages.unshift({role: "system", content: context})
+                messages.push({role: "system", content: context})
             } catch (contextError) {}
+
+            // Add role to messages
+            var role = process.env.OPENAI_DEFAULT_ROLE
+            if (roleError) fs.writeFile(roleFilepath, process.env.OPENAI_DEFAULT_ROLE, () => {})
+            else role = roleData
+            messages.push({role: "system", content: role})
+
+            // Add current user prompt to history
+            addHistory(message.chat.id, {role: "user", content: message.text})
+
+            // Add history to messages
+            currentHistory = getHistory(message.chat.id)
+            messages = messages.concat(currentHistory)
 
             openai.chat.completions.create({
                 model: process.env.OPENAI_MODEL,
                 messages
             }).then((completion) => {
+                addHistory(message.chat.id, {role: "assistant", content: completion.choices[0].message.content})
                 reply(message.chat.id, completion.choices[0].message.content)
             })
         })
@@ -149,4 +155,15 @@ function reply(chatId, response) {
             reply(chatId, remainingResponse)
         })
     }
+}
+
+function addHistory(chatId, message) {
+    if (typeof(historyQueue[chatId]) === "undefined") historyQueue[chatId] = []
+    while (historyQueue[chatId].length >= process.env.HISTORY_LIMIT) historyQueue[chatId].shift()
+    historyQueue[chatId].push(message)
+}
+
+function getHistory(chatId) {
+    if (typeof(historyQueue[chatId]) === "undefined") historyQueue[chatId] = []
+    return historyQueue[chatId]
 }
